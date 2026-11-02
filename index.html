@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Gruselmaschine</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Creepster&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* Layout: Jahrmarkt-Gruselautomat bei Nacht – Schritte oben, Maschine/Schreibtisch in der Mitte, Hilfen als aufklappbare Laterne rechts bzw. unten */
+:root{
+  --night:#13111b;      /* Seitengrund */
+  --panel:#1e1a29;      /* Flächen */
+  --panel-2:#272236;    /* gehobene Flächen */
+  --line:#3a3350;       /* Linien */
+  --bone:#efe6d2;       /* Text */
+  --mist:#a99fbd;       /* leiser Text */
+  --lantern:#f2a541;    /* Akzent: Laternenlicht */
+  --lantern-ink:#2a1a05;
+  --ember:#d4614a;      /* Warnung / fix */
+  --ghost:#9fd4c3;      /* erledigt */
+  --display:"Creepster","Chiller","Papyrus",fantasy;
+  --body:"Atkinson Hyperlegible","Verdana","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{background:var(--night);color:var(--bone)}
+body{font-family:var(--body);font-size:17px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px;
+  background:radial-gradient(1200px 500px at 70% -10%,#2a2140 0%,transparent 60%),var(--night);min-height:100%}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--lantern);outline-offset:2px;border-radius:6px}
+.wrap{max-width:1180px;margin:0 auto}
+
+header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding-block:18px 10px}
+.brand{display:flex;align-items:baseline;gap:12px}
+.brand h1{font-family:var(--display);font-weight:400;font-size:clamp(34px,6vw,52px);letter-spacing:.02em;margin:0;color:var(--lantern);
+  text-shadow:0 0 18px rgba(242,165,65,.35)}
+.brand span{color:var(--mist);font-size:14px;letter-spacing:.08em;text-transform:uppercase}
+
+nav.steps{display:flex;gap:6px;flex-wrap:wrap}
+nav.steps button{background:transparent;border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:15px;color:var(--mist)}
+nav.steps button[aria-current="step"]{background:var(--lantern);color:var(--lantern-ink);border-color:var(--lantern);font-weight:700}
+nav.steps button:disabled{opacity:.35;cursor:not-allowed}
+nav.steps b{font-variant-numeric:tabular-nums}
+
+main{margin-top:14px}
+h2{font-size:24px;margin:0 0 6px;text-wrap:balance}
+h3{font-size:18px;margin:0 0 6px}
+p{margin:0 0 10px}
+.lead{color:var(--mist);max-width:62ch}
+.btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:12px;padding:12px 20px;font-weight:700;font-size:17px;background:var(--lantern);color:var(--lantern-ink);
+  box-shadow:0 4px 0 #a86a1d}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #a86a1d}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--bone);border:1px solid var(--line);box-shadow:none}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.muted{color:var(--mist);font-size:15px}
+
+/* Start */
+.start{display:grid;grid-template-columns:1.1fr 1fr;gap:28px;align-items:start}
+.start .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px}
+label.field{display:grid;gap:6px;margin-bottom:16px}
+label.field span{font-size:14px;color:var(--mist);letter-spacing:.04em;text-transform:uppercase}
+input[type=text]{background:var(--night);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+.mode{text-align:left;background:var(--panel-2);border:2px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:4px}
+.mode strong{font-size:19px}
+.mode small{color:var(--mist);font-size:14px;line-height:1.4}
+.mode[aria-pressed="true"]{border-color:var(--lantern);background:#2e2639}
+.mode .tag{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--lantern)}
+
+/* Maschine */
+.machine{background:linear-gradient(#2a2035,#1b1724);border:2px solid #4a3c5c;border-radius:26px;padding:18px;position:relative;
+  box-shadow:inset 0 0 0 6px #191420, 0 20px 50px rgba(0,0,0,.5)}
+.marquee{display:flex;justify-content:center;align-items:center;gap:14px;margin-bottom:14px}
+.marquee .bulbs{display:flex;gap:8px}
+.marquee .bulbs i{width:10px;height:10px;border-radius:50%;background:var(--lantern);opacity:.35}
+.machine.spinning .marquee .bulbs i{animation:blink .5s infinite alternate}
+.machine.spinning .marquee .bulbs i:nth-child(2n){animation-delay:.25s}
+@keyframes blink{to{opacity:1;box-shadow:0 0 10px var(--lantern)}}
+.marquee h2{font-family:var(--display);font-weight:400;font-size:clamp(26px,4vw,36px);color:var(--lantern);margin:0;letter-spacing:.04em}
+.reels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.reels.n4{grid-template-columns:repeat(2,minmax(0,1fr))}
+.reel{background:var(--night);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.reel .cap{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--mist);border-bottom:1px solid var(--line)}
+.reel .cap .st{font-size:12px;letter-spacing:.04em;text-transform:none;padding:2px 8px;border-radius:999px;border:1px solid var(--line)}
+.reel .cap .st.fix{color:var(--ember);border-color:var(--ember)}
+.reel .win{position:relative;min-height:128px;display:grid;place-items:center;padding:14px;text-align:center}
+.reel .win .bg{position:absolute;inset:0;opacity:.85}
+.reel .win .bg svg{width:100%;height:100%;display:block}
+.reel .win .val{position:relative;font-size:20px;font-weight:700;line-height:1.3;text-wrap:balance;text-shadow:0 2px 8px rgba(0,0,0,.9)}
+.reel .win .val.empty{color:var(--line);font-family:var(--display);font-weight:400;font-size:44px}
+.reel.spin .win .val{filter:blur(1.2px);color:var(--mist)}
+.reel .win::before,.reel .win::after{content:"";position:absolute;left:0;right:0;height:22px;z-index:1;pointer-events:none}
+.reel .win::before{top:0;background:linear-gradient(var(--night),transparent)}
+.reel .win::after{bottom:0;background:linear-gradient(transparent,var(--night))}
+.reel .act{padding:8px 10px;border-top:1px solid var(--line);display:flex;justify-content:center}
+.reel .act button{background:transparent;border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:15px}
+.reel .act button:disabled{opacity:.4;cursor:not-allowed}
+.lever-row{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;margin-top:16px}
+.lever{font-family:var(--display);font-weight:400;font-size:28px;letter-spacing:.04em;padding:10px 28px}
+.rule{color:var(--mist);font-size:15px;max-width:52ch}
+.where{margin-top:22px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px}
+.where .opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+.where .opts button{text-align:left;background:var(--panel-2);border:2px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:4px}
+.where .opts button strong{font-size:19px}
+.where .opts button small{color:var(--mist);font-size:14px}
+.where .opts button[aria-pressed="true"]{border-color:var(--lantern)}
+
+/* Story-Karte */
+.story{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:16px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:18px}
+.story .pic{border-radius:12px;overflow:hidden;aspect-ratio:16/9;max-width:100%;background:#0b0a12}
+.story .pic svg{width:100%;height:100%;display:block}
+.story dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;margin:0;align-content:center}
+.story dt{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mist);padding-top:3px}
+.story dd{margin:0;font-weight:700}
+
+/* Planen */
+.curve{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px}
+.curve svg{width:100%;height:auto;display:block;max-height:180px}
+.plan{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:8px}
+.plan label{display:grid;gap:6px;min-width:0}
+.plan label b{font-size:15px}
+.plan label small{color:var(--mist);font-size:13px;line-height:1.35}
+textarea{background:var(--night);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;resize:vertical;line-height:1.55}
+.plan textarea{min-height:110px;font-size:16px}
+
+/* Schreiben */
+.desk{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}
+.sheet{display:grid;gap:14px;min-width:0}
+.sec{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;gap:8px;min-width:0}
+.sec.active{border-color:var(--lantern)}
+.sec header{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.sec header small{color:var(--mist);font-size:14px}
+.sec .note{font-size:14px;color:var(--mist);border-left:3px solid var(--line);padding-left:10px}
+.sec textarea{min-height:170px;font-size:18px;background:#16131f}
+#t_title{font-size:22px;font-weight:700}
+.counter{font-variant-numeric:tabular-nums;color:var(--mist);font-size:15px}
+.counter b{color:var(--bone)}
+.secpick{display:flex;gap:6px;flex-wrap:wrap}
+.secpick button{background:transparent;border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:15px}
+.secpick button[aria-pressed="true"]{background:var(--panel-2);border-color:var(--lantern);color:var(--lantern)}
+
+/* Hilfen */
+.help{position:sticky;top:12px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px;display:grid;gap:10px;min-width:0}
+.help h3{display:flex;align-items:center;gap:8px}
+.help .tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.help .tabs button{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:8px 4px;font-size:14px;font-weight:700}
+.help .tabs button[aria-pressed="true"]{border-color:var(--lantern);color:var(--lantern)}
+.help .body{max-height:52vh;overflow:auto;display:grid;gap:12px;padding-right:2px}
+.help .group h4{margin:0 0 6px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--mist)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--night);border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:15px;text-align:left}
+.chip.long{border-radius:10px}
+.chip:hover{border-color:var(--lantern)}
+.tip{background:var(--night);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.tip b{display:block;margin-bottom:2px}
+.tip i{color:var(--mist);font-size:15px}
+.stuck{background:transparent;border:2px dashed var(--ember);color:var(--bone);border-radius:12px;padding:10px;font-weight:700}
+.stuckq{background:#2a1a1d;border:1px solid var(--ember);border-radius:12px;padding:10px 12px;font-size:16px;display:grid;gap:6px}
+.stuckq p{margin:0;font-size:17px}
+.sqhead{display:flex;justify-content:space-between;gap:8px;font-size:14px}
+.sqhead span{color:var(--mist);font-variant-numeric:tabular-nums}
+.sqnext{padding:8px 14px;font-size:15px;justify-self:start}
+.helpnote{font-size:13px;color:var(--mist)}
+
+/* Prüfen */
+.checks{display:grid;gap:8px;max-width:760px}
+.checks label{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.checks input{width:22px;height:22px;accent-color:var(--lantern);flex:none;margin-top:2px}
+.checks label.done{border-color:#3e5a52}
+.result{margin-top:22px;display:grid;gap:12px}
+.result pre{white-space:pre-wrap;word-wrap:break-word;background:#f4ecd8;color:#20180d;border-radius:12px;padding:20px;font-family:var(--body);font-size:17px;line-height:1.6;max-height:420px;overflow:auto;margin:0}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ghost);color:#0d2019;font-weight:700;padding:10px 18px;border-radius:999px;z-index:20}
+
+/* Modal */
+.modal{position:fixed;inset:0;background:rgba(5,4,10,.75);display:grid;place-items:center;z-index:30;padding:16px}
+.modal .box{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;max-width:420px;width:100%;display:grid;gap:12px}
+footer.foot{margin-top:40px;color:var(--mist);font-size:13px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+footer.foot button{background:none;border:none;color:var(--mist);text-decoration:underline;font-size:13px;padding:0}
+
+.flick{animation:flick 3.2s infinite}
+@keyframes flick{0%,18%,22%,60%,100%{opacity:1}20%{opacity:.25}62%{opacity:.5}}
+@media (prefers-reduced-motion:reduce){.flick,.machine.spinning .marquee .bulbs i{animation:none}}
+
+@media (max-width:900px){
+  .desk{grid-template-columns:minmax(0,1fr)}
+  .help{position:static}
+  .plan{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .reels{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .start{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:560px){
+  .reels,.reels.n4,.plan,.modes,.where .opts{grid-template-columns:minmax(0,1fr)}
+  .story{grid-template-columns:minmax(0,1fr)}
+}
+@media print{
+  body{background:#fff;color:#000}
+  body *{visibility:hidden}
+  #printArea,#printArea *{visibility:visible}
+  #printArea{position:absolute;left:0;top:0;width:100%}
+  #printArea pre{background:#fff;color:#000;max-height:none;overflow:visible;font-size:13pt}
+}
+</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1>Gruselmaschine</h1><span>Deutsch · 2. Klasse</span></div>
+    <nav class="steps" id="steps" aria-label="Arbeitsschritte"></nav>
+  </header>
+  <main id="app"></main>
+  <footer class="foot">
+    <span>Dein Text bleibt nur auf diesem Gerät gespeichert.</span>
+    <button type="button" id="resetBtn">Neu beginnen (Lehrkraft)</button>
+  </footer>
+</div>
+<div id="modalHost"></div>
+
+<script>
+/* ===== Einstellungen für die Lehrkraft ===== */
+const LEHRER_CODE = "grusel26";   // Code zum Zurücksetzen (Neu beginnen)
+const STORE_KEY = "gruselmaschine-v1";
+
+/* ===== Ortsbilder (Scherenschnitt-Szenen) ===== */
+let uid = 0;
+function rng(seed){let s=seed%2147483647;if(s<=0)s+=2147483646;return()=>((s=s*16807%2147483647)-1)/2147483646;}
+const SIL="#0b0a12";
+function base(top,bot){const id="g"+(++uid);return {id,defs:`<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${top}"/><stop offset="1" stop-color="${bot}"/></linearGradient><radialGradient id="${id}m"><stop offset="0" stop-color="#f6efd6" stop-opacity=".5"/><stop offset="1" stop-color="#f6efd6" stop-opacity="0"/></radialGradient><radialGradient id="${id}l"><stop offset="0" stop-color="#f2a541" stop-opacity=".75"/><stop offset="1" stop-color="#f2a541" stop-opacity="0"/></radialGradient></defs><rect width="320" height="180" fill="url(#${id})"/>`};}
+function moon(b,x,y,r){return `<circle cx="${x}" cy="${y}" r="${r*3.2}" fill="url(#${b.id}m)"/><circle cx="${x}" cy="${y}" r="${r}" fill="#ece3c6"/><circle cx="${x-r*.3}" cy="${y-r*.2}" r="${r*.18}" fill="#d9cfae"/><circle cx="${x+r*.35}" cy="${y+r*.3}" r="${r*.12}" fill="#d9cfae"/>`;}
+function glow(b,x,y,r){return `<circle cx="${x}" cy="${y}" r="${r}" fill="url(#${b.id}l)"/>`;}
+function stars(seed,n,maxY){const r=rng(seed);let s="";for(let i=0;i<n;i++)s+=`<circle cx="${(r()*320).toFixed(1)}" cy="${(r()*maxY).toFixed(1)}" r="${(r()*.9+.3).toFixed(2)}" fill="#efe6d2" opacity="${(r()*.6+.2).toFixed(2)}"/>`;return s;}
+function crows(arr){return arr.map(([x,y,s])=>`<path d="M${x-6*s} ${y} q${3*s} ${-4*s} ${6*s} 0 q${3*s} ${-4*s} ${6*s} 0" stroke="${SIL}" stroke-width="1.6" fill="none"/>`).join("");}
+function pine(x,h,w,c){c=c||SIL;return `<path d="M${x} ${180-h} L${x+w*.5} ${180-h*.62} L${x+w*.25} ${180-h*.62} L${x+w*.65} ${180-h*.3} L${x+w*.3} ${180-h*.3} L${x+w*.75} 180 L${x-w*.75} 180 L${x-w*.3} ${180-h*.3} L${x-w*.65} ${180-h*.3} L${x-w*.25} ${180-h*.62} L${x-w*.5} ${180-h*.62} Z" fill="${c}"/>`;}
+
+const SCENES={
+  turnhalle(){const b=base("#1d1b36","#151322");let s=b.defs;
+    for(let i=0;i<4;i++){const x=40+i*64;s+=`<rect x="${x}" y="18" width="40" height="52" fill="#3c4a7c"/><path d="M${x+20} 18v52M${x} 44h40" stroke="#151322" stroke-width="3"/><polygon points="${x},70 ${x+40},70 ${x+70},180 ${x+10},180" fill="#7d8cc4" opacity=".09"/>`;}
+    s+=`<rect x="0" y="122" width="320" height="58" fill="#221b2c"/>`;for(let i=0;i<7;i++)s+=`<path d="M0 ${130+i*8}H320" stroke="#2c2438" stroke-width="1"/>`;
+    s+=`<path d="M60 140 Q160 118 260 140" stroke="#3a3048" stroke-width="2" fill="none"/>`;
+    s+=`<rect x="276" y="62" width="34" height="24" fill="none" stroke="#8a86a6" stroke-width="2"/><path d="M293 86v-6" stroke="#8a86a6" stroke-width="2"/><ellipse cx="290" cy="90" rx="10" ry="3" fill="none" stroke="#c4683f" stroke-width="2"/><path d="M281 91l4 12M299 91l-4 12M290 93v11" stroke="#8a86a6" stroke-width="1" opacity=".7"/>`;
+    s+=`<circle cx="118" cy="160" r="8" fill="#7a3f22"/><path d="M110 160h16M118 152v16" stroke="#3a1d10" stroke-width="1"/><ellipse cx="118" cy="169" rx="10" ry="2" fill="#000" opacity=".5"/>`;
+    s+=`<path d="M0 0H320V8H0Z" fill="${SIL}"/>`;return s+"</svg>";},
+  dachboden(){const b=base("#1b1726","#120f19");let s=b.defs;
+    s+=`<circle cx="160" cy="62" r="24" fill="#3f4b7a"/><circle cx="160" cy="62" r="24" fill="url(#${b.id}m)"/><path d="M160 38v48M136 62h48" stroke="#120f19" stroke-width="4"/><circle cx="160" cy="62" r="24" fill="none" stroke="${SIL}" stroke-width="5"/>`;
+    s+=`<polygon points="160,62 140,180 230,180" fill="#8a96c8" opacity=".07"/>`;
+    s+=`<path d="M0 120 L160 -10 L320 120" stroke="${SIL}" stroke-width="12" fill="none"/><path d="M40 180 V88 M280 180 V88" stroke="${SIL}" stroke-width="8"/><path d="M40 100 H280" stroke="${SIL}" stroke-width="6"/>`;
+    s+=`<rect x="0" y="158" width="320" height="22" fill="#1a1520"/>`;
+    s+=`<rect x="56" y="130" width="40" height="30" fill="#2a2030"/><rect x="74" y="112" width="30" height="20" fill="#241b2a"/><path d="M56 145h40" stroke="#1a1520"/>`;
+    s+=`<path d="M220 160 q16 4 40 0 M226 160 l2 -34 h26 l-4 34 M228 126 l-6 -26 h28 l6 26" stroke="${SIL}" stroke-width="4" fill="none"/>`;
+    s+=`<path d="M300 100 l20 -16 M300 100 l20 0 M300 100 l14 14 M306 95 q4 4 7 2 M309 100 q2 4 5 4" stroke="#6d6585" stroke-width=".8" fill="none" opacity=".7"/>`;return s+"</svg>";},
+  maisfeld(){const b=base("#1a2250","#3a3160");let s=b.defs+stars(7,40,90)+moon(b,250,38,13);
+    s+=`<path d="M0 132 Q160 118 320 130 V180 H0Z" fill="#141022"/>`;
+    s+=`<path d="M110 180V96M92 112H128" stroke="${SIL}" stroke-width="4"/><circle cx="110" cy="88" r="9" fill="${SIL}"/><path d="M96 82h28l-8 -10h-12z" fill="${SIL}"/><path d="M98 112 l-6 18 M122 112 l6 18 M104 112 l-4 30h20l-4 -30" fill="${SIL}" stroke="${SIL}" stroke-width="2"/>`;
+    const r=rng(31);for(let i=0;i<64;i++){const x=i*5.1+r()*3,h=40+r()*48,dx=(r()-.5)*8;s+=`<path d="M${x.toFixed(1)} 180 Q${(x+dx/2).toFixed(1)} ${(180-h/2).toFixed(1)} ${(x+dx).toFixed(1)} ${(180-h).toFixed(1)} M${(x+dx*.4).toFixed(1)} ${(180-h*.5).toFixed(1)} l${r()>.5?7:-7} -6" stroke="${SIL}" stroke-width="2.2" fill="none"/>`;}
+    s+=crows([[200,60,1],[216,52,.8],[180,70,.7]]);return s+"</svg>";},
+  campingplatz(){const b=base("#141b33","#2b3552");let s=b.defs+stars(12,30,70)+moon(b,60,34,10);
+    for(let i=0;i<9;i++)s+=pine(10+i*38,70+((i*37)%30),34,"#1a1f33");
+    s+=`<rect x="0" y="146" width="320" height="34" fill="#11141f"/>`;
+    s+=`<polygon points="70,150 100,108 130,150" fill="${SIL}"/>`+glow(b,200,138,40)+`<polygon points="170,152 204,104 238,152" fill="#2a1f14"/><polygon points="196,152 204,128 212,152" fill="#f2a541" opacity=".55"/><path d="M170 152 L204 104 L238 152" stroke="${SIL}" stroke-width="3" fill="none"/>`;
+    s+=`<path d="M262 152h22M266 152l6-14 6 14" stroke="${SIL}" stroke-width="3" fill="none"/>`;
+    for(let i=0;i<5;i++)s+=`<ellipse cx="${40+i*70}" cy="${150-(i%2)*12}" rx="90" ry="10" fill="#cfd6ea" opacity=".08"/>`;return s+"</svg>";},
+  waldweg(){const b=base("#0f152a","#232f49");let s=b.defs+stars(3,24,60)+moon(b,160,30,11);
+    s+=`<polygon points="140,180 180,180 166,110 156,110" fill="#2b2a3c"/>`;
+    const r=rng(5);for(let i=0;i<14;i++){const left=i<7,x=left?8+i*19:180+(i-7)*20,w=6+r()*8;s+=`<rect x="${x}" y="0" width="${w.toFixed(1)}" height="180" fill="${SIL}"/>`;for(let k=0;k<3;k++){const y=20+r()*80,len=14+r()*16,d=left?1:-1;s+=`<path d="M${x+w/2} ${y.toFixed(0)} l${(d*len).toFixed(0)} ${(-len*.6).toFixed(0)}" stroke="${SIL}" stroke-width="2"/>`;}}
+    s+=`<path d="M128 180V136" stroke="${SIL}" stroke-width="3"/><rect x="123" y="126" width="10" height="12" fill="${SIL}"/>`+glow(b,128,132,22)+`<rect x="125" y="128" width="6" height="8" fill="#f2c27a"/>`;return s+"</svg>";},
+  burgruine(){const b=base("#1d1838","#4a3a5c");let s=b.defs+stars(21,30,80)+moon(b,240,44,18);
+    s+=`<path d="M0 150 Q100 120 200 132 T320 140 V180H0Z" fill="#141022"/>`;
+    s+=`<path d="M60 140 V70 h10 v-8 h10 v8 h10 v-8 h10 v8 h10 V96 h40 v-14 h8 l6 10 l8 -6 v52 h30 v-40 h10 v-8 h8 v12 h6 v-6 h8 V140Z" fill="${SIL}"/><path d="M74 140 v-24 a8 8 0 0 1 16 0 v24z M160 140 v-20 a7 7 0 0 1 14 0 v20z" fill="#3a2f4e"/><rect x="88" y="84" width="6" height="12" rx="3" fill="#3a2f4e"/>`;
+    s+=crows([[150,40,1],[170,50,.8],[130,56,.9]]);return s+"</svg>";},
+  bootshaus(){const b=base("#0f1a2e","#253552");let s=b.defs+stars(9,26,70)+moon(b,230,34,12);
+    s+=`<rect x="0" y="112" width="320" height="68" fill="#0d1524"/>`;for(let i=0;i<8;i++)s+=`<path d="M${222-i*2} ${120+i*7}h${16+i*4}" stroke="#ece3c6" stroke-width="1.6" opacity="${.5-i*.05}"/>`;
+    s+=`<path d="M0 112 Q60 96 120 108 L120 112Z" fill="#141c2c"/>`;
+    s+=`<polygon points="40,70 90,46 140,70" fill="${SIL}"/><rect x="48" y="70" width="84" height="40" fill="${SIL}"/><rect x="80" y="84" width="20" height="26" fill="#1c2840"/><path d="M50 110v14M80 110v14M110 110v14M130 110v14" stroke="${SIL}" stroke-width="4"/><rect x="40" y="108" width="140" height="5" fill="${SIL}"/>`;
+    s+=`<path d="M150 130 q20 8 44 0 l-4 6 h-36z" fill="${SIL}"/><path d="M60 132h20" stroke="#2a3a55" stroke-width="1"/>`;return s+"</svg>";},
+  bahnhof(){const b=base("#151a2c","#2b2f45");let s=b.defs+stars(17,20,50);
+    s+=`<rect x="0" y="124" width="320" height="56" fill="#100f18"/><path d="M0 150h320M0 166h320" stroke="#3b3a4c" stroke-width="2"/>`;for(let i=0;i<16;i++)s+=`<path d="M${i*21} 148v20" stroke="#2a2836" stroke-width="3"/>`;
+    s+=`<rect x="120" y="112" width="200" height="14" fill="${SIL}"/><path d="M120 50h200v-8H140z" fill="${SIL}"/><path d="M150 50v62M240 50v62M310 50v62" stroke="${SIL}" stroke-width="4"/>`;
+    s+=`<circle cx="195" cy="72" r="13" fill="#d8cfb4"/><circle cx="195" cy="72" r="13" fill="none" stroke="${SIL}" stroke-width="3"/><path d="M195 72v-9M195 72l-2 -8" stroke="${SIL}" stroke-width="2"/><path d="M195 59v-9" stroke="${SIL}" stroke-width="2"/>`;
+    s+=`<rect x="270" y="88" width="22" height="24" fill="#1e2135"/><path d="M276 112v-6h10v6" fill="none" stroke="#2b2f45"/>`;
+    s+=glow(b,30,140,46)+`<circle cx="30" cy="140" r="5" fill="#f6dfa8"/>`;return s+"</svg>";},
+  jahrmarkt(){const b=base("#1a1430","#3d2a4a");let s=b.defs+stars(41,26,70);
+    s+=`<circle cx="210" cy="78" r="56" fill="none" stroke="${SIL}" stroke-width="4"/><circle cx="210" cy="78" r="6" fill="${SIL}"/>`;for(let i=0;i<10;i++){const a=i*Math.PI/5,x=210+56*Math.cos(a),y=78+56*Math.sin(a);s+=`<path d="M210 78L${x.toFixed(1)} ${y.toFixed(1)}" stroke="${SIL}" stroke-width="2"/><rect x="${(x-5).toFixed(1)}" y="${(y+2).toFixed(1)}" width="10" height="9" fill="${i===3?"#f2a541":SIL}"/>`;}
+    s+=`<path d="M196 180l14-102 14 102" stroke="${SIL}" stroke-width="5" fill="none"/>`;
+    s+=`<polygon points="20,180 20,120 70,92 120,120 120,180" fill="${SIL}"/><path d="M70 92v-12" stroke="${SIL}" stroke-width="2"/><polygon points="70,80 82,84 70,88" fill="#5a2a2a"/><path d="M60 180v-30a10 10 0 0 1 20 0v30" fill="#1f1528"/>`;
+    s+=`<path d="M0 110 Q60 126 140 104" stroke="#3a2c40" stroke-width="1" fill="none"/>`;for(let i=0;i<9;i++)s+=`<circle cx="${10+i*15}" cy="${112+Math.sin(i/1.4)*5}" r="2" fill="#f2a541" opacity="${i%3?.25:.85}"/>`;
+    s+=`<rect x="0" y="170" width="320" height="10" fill="${SIL}"/>`;return s+"</svg>";},
+  museumskeller(){const b=base("#17151f","#0f0d15");let s=b.defs;
+    for(let i=0;i<4;i++){const x=i*84-6;s+=`<path d="M${x} 180V60 a42 42 0 0 1 84 0V180" fill="none" stroke="#2a2535" stroke-width="10"/>`;}
+    s+=`<polygon points="150,0 180,0 236,180 96,180" fill="#e8dcb8" opacity=".07"/>`;
+    s+=`<rect x="0" y="150" width="320" height="30" fill="#151219"/>`;
+    s+=`<rect x="124" y="120" width="56" height="34" fill="#1f1a27"/><path d="M152 120v-50" stroke="${SIL}" stroke-width="0"/>`;
+    s+=`<path d="M152 60 a12 12 0 0 1 12 12v6h-24v-6a12 12 0 0 1 12-12z M138 80h28l4 40h-36z M144 84v4h16v-4" fill="#2c2735"/><path d="M144 72h16" stroke="#0f0d15" stroke-width="2"/>`;
+    s+=`<rect x="220" y="102" width="44" height="50" fill="none" stroke="#5b5872" stroke-width="2"/><rect x="220" y="102" width="44" height="50" fill="#9aa6c8" opacity=".06"/><ellipse cx="242" cy="140" rx="12" ry="5" fill="#3a3346"/><path d="M234 138 q8 -14 16 0" fill="#3a3346"/><rect x="216" y="152" width="52" height="28" fill="#1c1823"/>`;return s+"</svg>";},
+  lift(){const b=base("#16151d","#0e0d13");let s=b.defs;
+    s+=`<rect x="98" y="34" width="124" height="146" fill="#24222d"/><rect x="106" y="44" width="54" height="136" fill="#33303f"/><rect x="160" y="44" width="54" height="136" fill="#33303f"/>`+glow(b,160,110,30)+`<rect x="158" y="44" width="4" height="136" fill="#f6dfa8" opacity=".8"/>`;
+    s+=`<rect x="138" y="12" width="44" height="16" rx="3" fill="#0b0a10"/><text x="160" y="25" text-anchor="middle" font-family="monospace" font-size="12" fill="#d4614a">-3</text>`;
+    s+=`<rect x="236" y="96" width="14" height="30" rx="3" fill="#2c2a35"/><circle cx="243" cy="104" r="3" fill="#5c586b"/><circle cx="243" cy="118" r="3" fill="#d4614a" opacity=".7"/>`;
+    s+=`<g class="flick"><rect x="140" y="0" width="40" height="4" fill="#d9e2f0"/><polygon points="140,4 180,4 230,180 90,180" fill="#d9e2f0" opacity=".05"/></g>`;
+    s+=`<rect x="0" y="170" width="320" height="10" fill="#0b0a10"/>`;return s+"</svg>";},
+  jugendherberge(){const b=base("#16141f","#0f0d16");let s=b.defs;
+    s+=`<polygon points="0,180 320,180 186,104 134,104" fill="#1d1a26"/><polygon points="0,0 320,0 186,62 134,62" fill="#13111a"/><polygon points="0,0 134,62 134,104 0,180" fill="#211d2b"/><polygon points="320,0 186,62 186,104 320,180" fill="#1a1724"/>`;
+    s+=`<rect x="134" y="62" width="52" height="42" fill="#0b0a10"/><rect x="152" y="70" width="16" height="34" fill="#2a2638"/>`+glow(b,160,86,18);
+    [[20,10,58,170],[70,36,100,138]].forEach(([x1,y1,x2,y2])=>{s+=`<polygon points="${x1},${y1+40} ${x2},${y1+40+(x2-x1)*.45} ${x2},${y2-(x2-x1)*.2} ${x1},${y2}" fill="#2c2738"/>`;});
+    [[300,10,262,170],[250,36,220,138]].forEach(([x1,y1,x2,y2])=>{s+=`<polygon points="${x1},${y1+40} ${x2},${y1+40+(x1-x2)*.45} ${x2},${y2-(x1-x2)*.2} ${x1},${y2}" fill="#26222f"/>`;});
+    s+=`<polygon points="250,76 220,90 220,140 250,150" fill="#f2a541" opacity=".14"/>`;
+    s+=`<rect x="148" y="52" width="24" height="7" fill="#2f7a5a"/>`;return s+"</svg>";},
+  bibliothek(){const b=base("#18151f","#100e15");let s=b.defs;
+    s+=`<rect x="140" y="18" width="40" height="56" fill="#3c4a7c"/><path d="M160 18v56M140 46h40" stroke="#18151f" stroke-width="3"/><circle cx="168" cy="32" r="6" fill="#ece3c6"/>`;
+    const r=rng(77),cols=["#3b2a2a","#2a3340","#3a3524","#2e2a3c","#43302a","#26322c"];
+    [[10,120],[200,310]].forEach(([x0,x1])=>{for(let shelf=0;shelf<5;shelf++){const y=20+shelf*30;s+=`<rect x="${x0}" y="${y+26}" width="${x1-x0}" height="4" fill="${SIL}"/>`;let x=x0;while(x<x1-6){const w=4+r()*6,h=16+r()*9;s+=`<rect x="${x.toFixed(1)}" y="${(y+26-h).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="${cols[Math.floor(r()*cols.length)]}"/>`;x+=w+.8;}}});
+    s+=`<rect x="120" y="128" width="80" height="6" fill="${SIL}"/><path d="M128 134v46M192 134v46" stroke="${SIL}" stroke-width="4"/>`+glow(b,150,118,34)+`<path d="M150 128v-14l10 -6" stroke="${SIL}" stroke-width="2" fill="none"/><path d="M154 104 l12 0 l-4 8 l-6 0z" fill="#3a2c18"/><rect x="164" y="122" width="22" height="6" fill="#e9dfc4" transform="rotate(-6 175 125)"/>`;return s+"</svg>";},
+  keller(){const b=base("#141218","#0b0a0f");let s=b.defs;
+    for(let i=0;i<7;i++)s+=`<rect x="${10+i*16}" y="${40+i*16}" width="${130-i*16}" height="16" fill="#1f1c26" stroke="#0b0a0f"/>`;
+    s+=`<path d="M10 20 L130 140" stroke="${SIL}" stroke-width="3"/>`;
+    s+=`<path d="M210 0v40" stroke="#3a3646" stroke-width="1.5"/>`+glow(b,210,46,50)+`<circle cx="210" cy="46" r="6" fill="#f6dfa8"/>`;
+    s+=`<rect x="250" y="70" width="60" height="4" fill="${SIL}"/><rect x="250" y="104" width="60" height="4" fill="${SIL}"/>`;[[256,56],[270,58],[284,54],[296,60],[258,90],[276,88],[292,92]].forEach(([x,y])=>{s+=`<rect x="${x}" y="${y}" width="10" height="${(y<70?70:104)-y}" rx="2" fill="#2d3a2e" opacity=".9"/>`;});
+    s+=`<rect x="160" y="96" width="40" height="70" fill="#1a1720" stroke="#2a2633" stroke-width="3"/><circle cx="192" cy="132" r="2" fill="#5c586b"/>`;
+    s+=`<rect x="0" y="166" width="320" height="14" fill="#100e14"/>`;return s+"</svg>";}
+};
+function scene(name){uid++;const f=SCENES[name];return `<svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" role="img" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">`+(f?f():"</svg>");}
+
+/* ===== Bausteine ===== */
+const REELS=[
+ {id:"ort",label:"Ort",items:[
+  ["in der Turnhalle der Schule – nach Schulschluss","turnhalle"],["auf Omas Dachboden","dachboden"],["in einem Maisfeld bei Nacht","maisfeld"],
+  ["auf einem Campingplatz im Nebel","campingplatz"],["auf einem Waldweg hinter dem Ort","waldweg"],["in einer alten Burgruine","burgruine"],
+  ["im Bootshaus am See","bootshaus"],["auf einem verlassenen Bahnhof","bahnhof"],["auf dem Jahrmarkt nach Sperrstunde","jahrmarkt"],
+  ["im Keller eines Museums","museumskeller"],["im Lift eines Hochhauses","lift"],["auf der Schullandwoche in der Jugendherberge","jugendherberge"],
+  ["in der Schulbibliothek, als alle weg sind","bibliothek"],["im Keller eures Wohnhauses","keller"]]},
+ {id:"figur",label:"Hauptfigur",items:[
+  "du selbst (Ich-Erzählung)","du und deine beste Freundin oder dein bester Freund","ein Hausmeister kurz vor der Pension","Zwillinge, die ständig streiten",
+  "ein neues Kind in der Klasse","eine Lehrerin, die nie lacht","ein Bursche, der an nichts Unheimliches glaubt","ein Mädchen mit Taschenlampe und Notizbuch",
+  "dein kleiner Bruder oder deine kleine Schwester","eine Oma, die schon alles erlebt hat","ein Kind und sein Hund","ein Nachtwächter mit Thermoskanne",
+  "jemand, der ein Gruselvideo drehen will","eine Schulsprecherin","zwei Austauschschüler aus Schweden","ein Fahrradbote auf seiner letzten Fahrt"]},
+ {id:"zeit",label:"Zeit & Wetter",profi:true,items:[
+  "kurz vor Mitternacht","bei einem heftigen Gewitter","während eines Stromausfalls","in dichtem Nebel","in einer Vollmondnacht","in der Halloween-Nacht",
+  "bei einem Schneesturm","um drei Uhr früh","am Freitag, dem 13.","in der Nacht vor einem großen Test","an einem windstillen, viel zu heißen Abend",
+  "bei Regen, der nicht aufhören will","in der Dämmerung, wenn alle Farben verschwinden","in der letzten Ferien-Nacht"]},
+ {id:"gegenstand",label:"Gegenstand",items:[
+  "eine alte Spieluhr","ein Handy ohne Akku, das trotzdem klingelt","ein Schlüssel, der in kein Schloss passt","ein Foto, auf dem eine Person zu viel ist",
+  "ein Tagebuch, dessen leere Seiten sich füllen","eine Taschenlampe, die nur flackert","ein Kompass, der nicht nach Norden zeigt","ein rauschendes Walkie-Talkie",
+  "ein blinder Spiegel","ein Brief ohne Absender","eine Sanduhr, die nach oben rinnt","eine alte VR-Brille","ein Kassettenrekorder mit einer Aufnahme",
+  "eine Landkarte mit einem roten X","eine Schneekugel, in der es von selbst schneit","eine kleine Glocke ohne Klöppel"]},
+ {id:"unheimlich",label:"Das Unheimliche",items:[
+  "Schritte – aber niemand ist da","ein Schatten, der sich anders bewegt als man selbst","eine Stimme, die deinen Namen flüstert","Türen, die sich von selbst schließen",
+  "ein eiskalter Luftzug in einem geschlossenen Raum","leises Lachen aus dem Nichts","das Licht geht immer an derselben Stelle aus","Fußspuren, die plötzlich aufhören",
+  "ein Lied, das niemand spielt","Kratzen hinter der Wand","alle Uhren bleiben gleichzeitig stehen","jemand klopft dreimal","eine Schrift auf der beschlagenen Scheibe",
+  "zwei leuchtende Punkte im Dunkeln","eine Tür, die gestern noch nicht da war","dein Spiegelbild reagiert eine Sekunde zu spät"]},
+ {id:"wendung",label:"Wendung",profi:true,items:[
+  "Das Unheimliche wollte eigentlich warnen.","Der Geist braucht Hilfe.","Jemand in der Geschichte hat gelogen.","Am Ende bleibt ein Beweis zurück.",
+  "Ein Tier hat es die ganze Zeit gewusst.","Der Gegenstand ist am Ende verschwunden.","Alles lässt sich erklären – bis auf ein letztes Detail.",
+  "Ein Erwachsener glaubt dir – weil er es selbst erlebt hat.","Es ist schon einmal passiert, vor genau 50 Jahren.","Offenes Ende: Es fängt wieder von vorne an.",
+  "Die Hauptfigur war gar nicht allein.","Die Zeit ist in Wirklichkeit stehen geblieben."]}
+];
+const SECS=[
+ {id:"a",name:"Einleitung",q:"Wer? Wo? Wann? Alles ist noch normal.",y:120},
+ {id:"b",name:"Spannung steigt",q:"Erste seltsame Dinge passieren. Langsam steigern!",y:84},
+ {id:"c",name:"Höhepunkt",q:"Der unheimlichste Moment. Jetzt Zeitlupe!",y:24},
+ {id:"d",name:"Schluss",q:"Auflösung oder offenes Ende. Wie geht es der Figur?",y:96}
+];
+
+/* ===== Hilfen ===== */
+const WORTSCHATZ=[
+ ["Geräusche",["knarren","quietschen","knacken","rascheln","wispern","ächzen","tropfen","poltern","heulen","scharren","klirren","summen","totenstill"]],
+ ["Sehen",["flackern","huschen","schimmern","glühen","verschwimmen","düster","fahl","schemenhaft","finster","im Halbdunkel","ein dünner Lichtstreifen"]],
+ ["Fühlen",["eiskalt","klamm","eine Gänsehaut bekommen","zittern","erstarren","mein Herz raste","der Atem stockte","ein Kloß im Hals","weiche Knie","kalter Schweiß"]],
+ ["Statt „gehen“",["schleichen","tappen","sich vortasten","stolpern","kriechen","zurückweichen","huschen","sich ducken","davonrennen","sich nicht rühren"]],
+ ["Statt „sagen“",["flüstern","hauchen","stammeln","keuchen","kreischen","murmeln","zischen","stottern","wimmern","rufen"]],
+ ["Stimmung",["unheimlich","modrig","verlassen","gespenstisch","staubig","muffig","eisig","bedrohlich","rätselhaft","beklemmend"]]
+];
+const SATZ={
+ a:["Es war ein ganz gewöhnlicher …","Niemand ahnte, dass …","Eigentlich wollte ich nur …","Schon seit Tagen erzählten alle von …","Als wir an diesem Abend …","Ich hätte nie gedacht, dass …"],
+ b:["Plötzlich hörte ich …","Auf einmal …","Etwas stimmte hier nicht: …","Mir wurde ganz mulmig, denn …","Je näher ich kam, desto …","Langsam drehte ich mich um und …","Zuerst dachte ich, es sei nur …"],
+ c:["In diesem Moment …","Da stand es direkt vor mir: …","Mein Herz setzte einen Schlag aus, als …","Ich wollte schreien, aber …","Mit zitternden Händen …","Eine Sekunde lang war alles still. Dann …"],
+ d:["Erst am nächsten Morgen …","Erleichtert atmete ich auf, doch …","Bis heute weiß ich nicht, …","Seit dieser Nacht …","Als ich mich ein letztes Mal umdrehte, …","Niemand hat mir geglaubt. Nur …"]
+};
+const TIPPS=[
+ ["Zeitlupe","Erzähl den spannendsten Moment ganz langsam, Sekunde für Sekunde.","Meine Hand berührte die Klinke. Sie war kalt. Ganz langsam drückte ich sie nach unten …"],
+ ["Mit allen Sinnen","Was hört, sieht, riecht und spürt deine Figur?","Es roch nach nassem Holz, und irgendwo tropfte Wasser."],
+ ["Gedanken und Gefühle","Lass die Leser in den Kopf deiner Figur schauen.","„Bleib ruhig“, dachte ich. „Das war sicher nur der Wind.“"],
+ ["Kurze Sätze","Am Höhepunkt werden die Sätze kürzer. Das macht Tempo.","Ein Knacken. Stille. Dann ein Atemzug. Direkt hinter mir."],
+ ["Andeuten statt zeigen","Verrat nicht gleich alles. Was man nicht sieht, ist gruseliger.","Etwas Großes bewegte sich im Schatten."],
+ ["Fragen stellen","Fragen machen neugierig, wie es weitergeht.","Wer hatte das Licht ausgemacht? Und warum war die Tür jetzt offen?"],
+ ["Wörtliche Rede","Lass die Figuren sprechen – leise, ängstlich, aufgeregt.","„Hast du das auch gehört?“, flüsterte Mia."],
+ ["Gleiche Zeitform","Erzähl durchgehend in der Vergangenheit (Präteritum).","ich ging, ich hörte, es knarrte – nicht: ich gehe, es knarrt"]
+];
+const FEST={
+ a:["Was macht deine Figur gerade, bevor alles beginnt?","Warum ist deine Figur an diesem Ort?","Wie sieht der Ort aus? Beschreib zwei Dinge ganz genau.","Wer ist noch dabei – oder ist die Figur allein?",
+  "Wie fühlt sich deine Figur am Anfang: gut gelaunt, müde, gelangweilt, mutig?","Wie spät ist es, und wie ist das Wetter?","Was riecht man an diesem Ort?","Welches Geräusch ist am Anfang noch ganz normal?",
+  "Hat deine Figur jemandem versprochen, nicht hierherzugehen?","Was hat deine Figur in der Hand oder in der Tasche?","Was erzählen sich die Leute über diesen Ort?","Was will deine Figur hier eigentlich erledigen?",
+  "Beginne mit einem Satz, in dem alles noch harmlos wirkt.","Verrate in einem Satz, dass bald etwas passieren wird – aber nicht was.","Wie heißt deine Figur, und was ist typisch für sie?","Wo genau steht oder sitzt deine Figur gerade?"],
+ b:["Was hört deine Figur als Erstes?","Wo taucht dein Gegenstand zum ersten Mal auf?","Was denkt deine Figur: Bildet sie es sich nur ein?","Was passiert als Zweites – noch etwas seltsamer?",
+  "Was erklärt sich deine Figur zuerst ganz harmlos (z. B. „nur der Wind“)?","Was bemerkt deine Figur, das vorhin noch anders war?","Wird es kälter, dunkler oder stiller?","Was geht kaputt, aus oder verloren?",
+  "Will deine Figur jemanden anrufen oder rufen – und warum klappt es nicht?","Was macht deine Figur mit dem Gegenstand?","Wohin bewegt sich deine Figur jetzt – näher hin oder weg?","Welches Detail entdeckt sie, wenn sie genauer hinschaut?",
+  "Lass deine Figur eine Frage flüstern. Bekommt sie eine Antwort?","Wie verändert sich ihr Atem, ihr Herzschlag, ihre Hände?","Baue eine kurze Pause ein: Alles ist still – zu still.","Was passiert ein drittes Mal, noch näher und noch unheimlicher?"],
+ c:["Was sieht deine Figur genau in diesem Moment?","Wie reagiert ihr Körper? (Herz, Atem, Hände, Knie)","Was macht deine Figur: wegrennen, verstecken oder hinschauen?","Was sagt oder flüstert sie?",
+  "Erzähl die nächsten drei Sekunden in Zeitlupe.","Schreib drei ganz kurze Sätze hintereinander.","Was hört deine Figur jetzt – direkt neben oder hinter sich?","Was spürt sie auf der Haut: einen Luftzug, eine Berührung, Kälte?",
+  "Kommt das Unheimliche näher? Wie langsam, wie schnell?","Welche Rolle spielt jetzt dein Gegenstand?","Kann deine Figur sich bewegen – oder ist sie wie erstarrt?","Was ist der eine Gedanke, der ihr durch den Kopf schießt?",
+  "Lass für einen Moment das Licht ausgehen. Was passiert im Dunkeln?","Was wäre das Schlimmste, das jetzt passieren könnte? Deute es nur an.","Wer oder was taucht im letzten Moment auf?","Welches Geräusch beendet den Höhepunkt?"],
+ d:["Wie endet die Nacht?","Gibt es eine Erklärung – oder bleibt ein Rätsel?","Was ist am nächsten Tag anders?","Welcher letzte Satz lässt die Leser schaudern?",
+  "Wie fühlt sich deine Figur, als alles vorbei ist?","Erzählt deine Figur jemandem davon? Glaubt man ihr?","Was passiert mit dem Gegenstand?","Kehrt deine Figur je an diesen Ort zurück?",
+  "Welche Spur bleibt zurück, die beweist, dass es wirklich passiert ist?","Was hat deine Figur aus dieser Nacht gelernt?","Lass am Ende ein kleines Detail übrig, das nicht erklärt wird.","Endet die Geschichte ruhig – oder mit einem neuen Schreck?",
+  "Greif einen Satz vom Anfang wieder auf, aber mit anderem Sinn.","Wie sieht der Ort am Ende aus – im Tageslicht?","Was hört deine Figur ganz zum Schluss noch einmal?","Schreib einen letzten Satz, der nur aus wenigen Wörtern besteht."]
+};
+const CHECKS=[
+ "Alle erdrehten Bausteine kommen in meiner Geschichte vor.",
+ "Meine Überschrift macht neugierig, verrät aber nicht das Ende.",
+ "In der Einleitung erfährt man: wer, wo, wann.",
+ "Die Spannung steigt langsam bis zum Höhepunkt.",
+ "Ich habe mindestens zwei Spannungstricks verwendet (z. B. Zeitlupe, Sinne, kurze Sätze).",
+ "Ich habe beschrieben, was meine Figur fühlt und denkt.",
+ "Ich habe treffende Verben statt „gehen“ und „sagen“ verwendet.",
+ "Ich bleibe in der Vergangenheit (Präteritum).",
+ "Mein Schluss passt zur Geschichte."
+];
+
+/* ===== Zustand ===== */
+const fresh=()=>({name:"",mode:null,reels:{},where:null,plan:{a:"",b:"",c:"",d:""},text:{title:"",a:"",b:"",c:"",d:""},check:{},step:0,sec:"a",helpTab:null});
+let S=load();
+function load(){try{const r=localStorage.getItem(STORE_KEY);if(r){return Object.assign(fresh(),JSON.parse(r));}}catch(e){}return fresh();}
+function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify(S));}catch(e){}}
+const activeReels=()=>REELS.filter(r=>S.mode==="profi"||!r.profi);
+const allSpun=()=>S.mode&&activeReels().every(r=>S.reels[r.id]);
+const anySpun=()=>Object.keys(S.reels).length>0;
+const itemText=(r,i)=>Array.isArray(r.items[i])?r.items[i][0]:r.items[i];
+const ortScene=()=>{const o=S.reels.ort;return o?REELS[0].items[o.idx][1]:null;};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const words=s=>(s.trim().match(/\S+/g)||[]).length;
+const $=sel=>document.querySelector(sel);
+
+/* ===== Navigation ===== */
+const STEPS=["Start","Drehen","Planen","Schreiben","Prüfen"];
+function canGo(i){if(i===0)return !anySpun();if(i===1)return !!S.mode;return allSpun()&&!!S.where;}
+function renderSteps(){$("#steps").innerHTML=STEPS.map((n,i)=>`<button type="button" data-step="${i}" ${S.step===i?'aria-current="step"':""} ${canGo(i)||S.step===i?"":"disabled"}><b>${i}</b> ${n}</button>`).join("");}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-step]");if(b&&!b.disabled){go(+b.dataset.step);}});
+function go(i){S.step=i;save();render();window.scrollTo({top:0,behavior:"smooth"});}
+
+function render(){renderSteps();const app=$("#app");
+  if(S.step===0)app.innerHTML=vStart();
+  else if(S.step===1)app.innerHTML=vMachine();
+  else if(S.step===2)app.innerHTML=vPlan();
+  else if(S.step===3)app.innerHTML=vWrite();
+  else app.innerHTML=vCheck();
+  bind();}
+
+/* ----- Start ----- */
+function vStart(){return `<section class="start">
+  <div><h2>Würfle dir eine Gruselgeschichte!</h2>
+  <p class="lead">Die Gruselmaschine sucht für jeden Baustein deiner Geschichte zufällig etwas aus: einen Ort, eine Hauptfigur, einen Gegenstand und etwas Unheimliches. Daraus machst du eine spannende Geschichte.</p>
+  <p class="lead">Jeden Baustein darfst du <b>einmal nachdrehen</b>. Danach ist er fix. Überleg also gut!</p>
+  <div class="story" style="margin-top:18px"><div class="pic">${scene("jahrmarkt")}</div><dl><dt>Ablauf</dt><dd>Drehen → Planen → Schreiben → Prüfen</dd><dt>Hilfen</dt><dd>Wortschatz, Satzanfänge und Tipps – nur wenn du sie brauchst.</dd></dl></div></div>
+  <div class="card">
+   <label class="field" for="nm"><span>Dein Vorname</span><input type="text" id="nm" autocomplete="off" value="${esc(S.name)}" placeholder="z. B. Lena"></label>
+   <span class="muted" style="display:block;margin-bottom:8px">Wähle deine Stufe:</span>
+   <div class="modes">
+    <button type="button" class="mode" data-mode="einsteiger" aria-pressed="${S.mode==="einsteiger"}"><span class="tag">4 Bausteine</span><strong>Einsteiger</strong><small>Ort, Hauptfigur, Gegenstand und das Unheimliche.</small></button>
+    <button type="button" class="mode" data-mode="profi" aria-pressed="${S.mode==="profi"}"><span class="tag">6 Bausteine</span><strong>Gruselprofi</strong><small>Dazu noch Zeit &amp; Wetter und eine Wendung, die du einbauen musst.</small></button>
+   </div>
+   <button type="button" class="btn" id="toMachine" ${S.mode?"":"disabled"}>Zur Gruselmaschine</button>
+  </div></section>`;}
+
+/* ----- Maschine ----- */
+function reelHTML(r){const st=S.reels[r.id];let val,cls="val",bg="";
+  if(!st){val="?";cls+=" empty";}else{val=esc(itemText(r,st.idx));if(r.id==="ort")bg=`<div class="bg">${scene(r.items[st.idx][1])}</div>`;}
+  const status=!st?"":st.spins>=2?`<span class="st fix">🔒 fix</span>`:`<span class="st">1× nachdrehen</span>`;
+  return `<div class="reel" id="reel-${r.id}"><div class="cap"><span>${r.label}</span>${status}</div>
+   <div class="win">${bg}<div class="${cls}">${val}</div></div>
+   <div class="act"><button type="button" data-re="${r.id}" ${st&&st.spins<2?"":"disabled"}>${st&&st.spins>=2?"Fix":"↻ Nochmal drehen"}</button></div></div>`;}
+function vMachine(){const rs=activeReels();const done=allSpun();
+  return `<section><div class="machine" id="machine">
+   <div class="marquee"><div class="bulbs">${"<i></i>".repeat(5)}</div><h2>Gruselmaschine</h2><div class="bulbs">${"<i></i>".repeat(5)}</div></div>
+   <div class="reels ${rs.length===4?"n4":""}">${rs.map(reelHTML).join("")}</div>
+   <div class="lever-row"><p class="rule">${done?"Alle Bausteine sind gedreht. Du kannst jeden noch einmal nachdrehen – danach bleibt er fix.":"Zieh den Hebel! Danach darfst du jeden Baustein einmal nachdrehen."}</p>
+   ${done?"":`<button type="button" class="btn lever" id="lever">Hebel ziehen!</button>`}</div></div>
+   ${done?vWhere():""}</section>`;}
+function vWhere(){return `<div class="where"><h3>Wo schreibst du deine Geschichte?</h3><p class="muted">Du kannst das später noch ändern.</p>
+  <div class="opts"><button type="button" data-where="tool" aria-pressed="${S.where==="tool"}"><strong>Hier am iPad</strong><small>Du schreibst in die Felder und kannst den Text am Ende abgeben.</small></button>
+  <button type="button" data-where="heft" aria-pressed="${S.where==="heft"}"><strong>In mein Heft</strong><small>Das iPad zeigt dir deine Bausteine, deinen Plan und die Hilfen.</small></button></div>
+  <div class="row" style="margin-top:14px"><button type="button" class="btn" id="toPlan" ${S.where?"":"disabled"}>Weiter zum Planen</button></div></div>`;}
+
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+let spinning=false;
+function spinReel(r,delay){return new Promise(res=>{
+  const el=$("#reel-"+r.id);const val=el.querySelector(".val");const bgEl=el.querySelector(".bg");if(bgEl)bgEl.remove();
+  const prev=S.reels[r.id];let idx;do{idx=Math.floor(Math.random()*r.items.length);}while(prev&&idx===prev.idx&&r.items.length>1);
+  el.classList.add("spin");val.classList.remove("empty");
+  const total=reduce?300:1100+delay;let t=0,step=55;
+  const tick=()=>{val.textContent=itemText(r,Math.floor(Math.random()*r.items.length));t+=step;step*=1.07;
+    if(t<total)setTimeout(tick,step);else{el.classList.remove("spin");S.reels[r.id]={idx,spins:(prev?prev.spins:0)+1};save();res();}};
+  tick();});}
+async function pull(ids){if(spinning)return;spinning=true;$("#machine").classList.add("spinning");
+  document.querySelectorAll("#lever,[data-re]").forEach(b=>b.disabled=true);
+  await Promise.all(ids.map((id,i)=>spinReel(REELS.find(r=>r.id===id),i*260)));
+  spinning=false;render();}
+
+/* ----- Story-Karte ----- */
+function storyCard(){const o=ortScene();return `<div class="story"><div class="pic">${o?scene(o):""}</div><dl>${activeReels().map(r=>`<dt>${r.label}</dt><dd>${esc(itemText(r,S.reels[r.id].idx))}</dd>`).join("")}</dl></div>`;}
+
+/* ----- Planen ----- */
+function curveSVG(){const xs=[40,160,280,380];const pts=SECS.map((s,i)=>[xs[i],s.y]);
+  return `<svg viewBox="0 0 420 150" role="img" aria-label="Spannungskurve"><path d="M10 136H410" stroke="#3a3350" stroke-width="1.5"/><path d="M14 140V6" stroke="#3a3350" stroke-width="1.5"/>
+   <text x="18" y="14" fill="#a99fbd" font-size="11" font-family="Atkinson Hyperlegible,Verdana,sans-serif">Spannung</text>
+   <path d="M20 128 C 80 124, 120 110, 160 84 S 250 16, 280 24 S 350 86, 400 104" stroke="#f2a541" stroke-width="4" fill="none" stroke-linecap="round"/>
+   ${pts.map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="7" fill="#13111b" stroke="#f2a541" stroke-width="3"/><text x="${x}" y="${y+(i===2?-14:24)}" text-anchor="middle" fill="#efe6d2" font-size="13" font-weight="700" font-family="Atkinson Hyperlegible,Verdana,sans-serif">${SECS[i].name}</text>`).join("")}</svg>`;}
+function vPlan(){return `<section>${storyCard()}<div class="curve"><h2>Plane deine Spannungskurve</h2><p class="muted">Schreib nur Stichwörter. Wo kommen deine Bausteine vor?</p>${curveSVG()}
+  <div class="plan">${SECS.map(s=>`<label for="p_${s.id}"><b>${s.name}</b><small>${s.q}</small><textarea id="p_${s.id}" data-plan="${s.id}">${esc(S.plan[s.id])}</textarea></label>`).join("")}</div>
+  <div class="row" style="margin-top:14px"><button type="button" class="btn" data-step="3">Weiter zum Schreiben</button></div></div></section>`;}
+
+/* ----- Schreiben ----- */
+function vWrite(){const tool=S.where==="tool";
+  const left=tool?`<div class="sheet"><div class="sec"><label for="t_title"><b>Überschrift</b></label><input type="text" id="t_title" data-text="title" value="${esc(S.text.title)}" placeholder="Eine Überschrift, die neugierig macht"></div>
+   ${SECS.map(s=>`<div class="sec ${S.sec===s.id?"active":""}" data-secbox="${s.id}"><header><label for="t_${s.id}"><b>${s.name}</b></label><small>${s.q}</small></header>
+   ${S.plan[s.id].trim()?`<div class="note">Dein Plan: ${esc(S.plan[s.id])}</div>`:""}
+   <textarea id="t_${s.id}" data-text="${s.id}" spellcheck="true">${esc(S.text[s.id])}</textarea></div>`).join("")}
+   <div class="row" style="justify-content:space-between"><span class="counter" id="counter"></span><button type="button" class="btn" data-step="4">Fertig – zum Prüfen</button></div></div>`
+  :`<div class="sheet">${storyCard()}<div class="sec"><h3>Woran schreibst du gerade?</h3><div class="secpick">${SECS.map(s=>`<button type="button" data-sec="${s.id}" aria-pressed="${S.sec===s.id}">${s.name}</button>`).join("")}</div>
+   ${SECS.map(s=>S.sec===s.id?`<p class="muted" style="margin-top:8px">${s.q}</p>${S.plan[s.id].trim()?`<div class="note">Dein Plan: ${esc(S.plan[s.id])}</div>`:""}`:"").join("")}</div>
+   <div class="row"><button type="button" class="btn" data-step="4">Fertig – zum Prüfen</button><span class="muted">Schreib die Überschrift und alle vier Teile ins Heft.</span></div></div>`;
+  return `<section>${tool?storyCard():""}<div class="desk">${left}<aside class="help" id="help">${helpHTML()}</aside></div></section>`;}
+
+function helpHTML(){const tool=S.where==="tool";const sec=SECS.find(s=>s.id===S.sec);
+  let body="";
+  if(S.helpTab==="wort")body=WORTSCHATZ.map(([g,ws])=>`<div class="group"><h4>${g}</h4><div class="chips">${ws.map(w=>`<button type="button" class="chip" data-ins="${esc(w)}">${esc(w)}</button>`).join("")}</div></div>`).join("");
+  if(S.helpTab==="satz")body=`<div class="group"><h4>Für: ${sec.name}</h4><div class="chips">${SATZ[S.sec].map(w=>`<button type="button" class="chip long" data-ins="${esc(w.replace(/ …$/,""))}">${esc(w)}</button>`).join("")}</div></div>`+(tool?"":`<div class="secpick">${SECS.map(s=>`<button type="button" data-sec="${s.id}" aria-pressed="${S.sec===s.id}">${s.name}</button>`).join("")}</div>`);
+  if(S.helpTab==="tipp")body=TIPPS.map(([t,d,b])=>`<div class="tip"><b>${t}</b>${d}<br><i>${esc(b)}</i></div>`).join("");
+  return `<h3>💡 Hilfe holen</h3><p class="helpnote">Nur aufmachen, wenn du sie brauchst.${tool?" Tippe auf ein Wort, dann landet es in deinem Text.":""}</p>
+   <div class="tabs">${[["wort","Wortschatz"],["satz","Satzanfänge"],["tipp","Tipps"]].map(([k,n])=>`<button type="button" data-help="${k}" aria-pressed="${S.helpTab===k}">${n}</button>`).join("")}</div>
+   ${body?`<div class="body">${body}</div>`:""}
+   <button type="button" class="stuck" id="stuck">Ich steck fest! – Tipps holen</button><div id="stuckOut"></div>`;}
+
+/* ----- Prüfen ----- */
+function fullText(){const t=S.text;return [(t.title.trim()||"Meine Gruselgeschichte"),(S.name.trim()?"von "+S.name.trim():""),"",t.a.trim(),"",t.b.trim(),"",t.c.trim(),"",t.d.trim()].filter((x,i,a)=>!(x===""&&a[i-1]==="")).join("\n").trim();}
+function vCheck(){const tool=S.where==="tool";const n=CHECKS.filter((_,i)=>S.check[i]).length;
+  return `<section><h2>Prüfe deine Geschichte</h2><p class="lead">Lies deine Geschichte noch einmal ganz durch${tool?"":" im Heft"}. Hake ab, was schon passt. Was noch fehlt, kannst du jetzt verbessern.</p>
+  <div class="checks">${CHECKS.map((c,i)=>`<label class="${S.check[i]?"done":""}" for="c${i}"><input type="checkbox" id="c${i}" data-chk="${i}" ${S.check[i]?"checked":""}><span>${c}</span></label>`).join("")}</div>
+  <p class="counter" style="margin-top:10px"><b>${n}</b> von ${CHECKS.length} erledigt</p>
+  ${tool?`<div class="result" id="printArea"><h3>Deine Geschichte (${words([S.text.a,S.text.b,S.text.c,S.text.d].join(" "))} Wörter)</h3><pre id="final">${esc(fullText())}</pre></div>
+  <div class="row" style="margin-top:12px"><button type="button" class="btn" id="copy">Text kopieren</button>${navigator.share?`<button type="button" class="btn ghost" id="share">Teilen / Abgeben</button>`:""}${window.self===window.top?`<button type="button" class="btn ghost" id="print">Drucken / PDF</button>`:""}<button type="button" class="btn ghost" data-step="3">Weiter verbessern</button></div>
+  <p class="muted" style="margin-top:8px">Zum Abgeben: Text kopieren und in die Aufgabe einfügen, die dir deine Lehrkraft gegeben hat.</p>`
+  :`<div class="where" style="margin-top:18px"><h3>Fertig?</h3><p>Zeig deine Geschichte im Heft her. Vielleicht liest du sie im Gruselkreis vor!</p></div>`}</section>`;}
+
+/* ===== Ereignisse ===== */
+function bind(){
+  const nm=$("#nm");if(nm)nm.oninput=()=>{S.name=nm.value;save();};
+  document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{S.mode=b.dataset.mode;save();render();});
+  const tm=$("#toMachine");if(tm)tm.onclick=()=>go(1);
+  const lv=$("#lever");if(lv)lv.onclick=()=>pull(activeReels().filter(r=>!S.reels[r.id]).map(r=>r.id));
+  document.querySelectorAll("[data-re]").forEach(b=>b.onclick=()=>pull([b.dataset.re]));
+  document.querySelectorAll("[data-where]").forEach(b=>b.onclick=()=>{S.where=b.dataset.where;save();render();});
+  const tp=$("#toPlan");if(tp)tp.onclick=()=>go(2);
+  document.querySelectorAll("[data-plan]").forEach(t=>t.oninput=()=>{S.plan[t.dataset.plan]=t.value;save();});
+  document.querySelectorAll("[data-text]").forEach(t=>{t.oninput=()=>{S.text[t.dataset.text]=t.value;save();count();};
+    t.onfocus=()=>{lastField=t;const k=t.dataset.text;if(k!=="title"&&S.sec!==k){S.sec=k;save();document.querySelectorAll("[data-secbox]").forEach(x=>x.classList.toggle("active",x.dataset.secbox===k));if(S.helpTab==="satz")refreshHelp();}};});
+  document.querySelectorAll("[data-sec]").forEach(b=>b.onclick=()=>{S.sec=b.dataset.sec;save();if(S.where==="heft")render();else refreshHelp();});
+  bindHelp();
+  document.querySelectorAll("[data-chk]").forEach(c=>c.onchange=()=>{S.check[c.dataset.chk]=c.checked;save();render();});
+  const cp=$("#copy");if(cp)cp.onclick=copyText;
+  const sh=$("#share");if(sh)sh.onclick=()=>navigator.share({title:S.text.title||"Meine Gruselgeschichte",text:fullText()}).catch(()=>{});
+  const pr=$("#print");if(pr)pr.onclick=()=>window.print();
+  count();}
+function bindHelp(){
+  document.querySelectorAll("[data-help]").forEach(b=>b.onclick=()=>{S.helpTab=S.helpTab===b.dataset.help?null:b.dataset.help;save();refreshHelp();});
+  document.querySelectorAll("#help [data-sec]").forEach(b=>b.onclick=()=>{S.sec=b.dataset.sec;save();if(S.where==="heft")render();else refreshHelp();});
+  document.querySelectorAll("[data-ins]").forEach(b=>{b.onmousedown=e=>e.preventDefault();b.onclick=()=>insert(b.dataset.ins);});
+  const st=$("#stuck");if(st)st.onclick=()=>showStuck(false);}
+const stuckOrder={},stuckPos={};
+function showStuck(next){const k=S.sec,qs=FEST[k];
+  if(!stuckOrder[k]){stuckOrder[k]=qs.map((_,i)=>i).sort(()=>Math.random()-.5);stuckPos[k]=0;}
+  else if(next)stuckPos[k]=(stuckPos[k]+1)%qs.length;
+  const n=stuckPos[k];const out=$("#stuckOut");if(!out)return;
+  out.innerHTML=`<div class="stuckq"><div class="sqhead"><b>${SECS.find(s=>s.id===k).name}</b><span>Tipp ${n+1} von ${qs.length}</span></div><p>${esc(qs[stuckOrder[k][n]])}</p><button type="button" class="btn ghost sqnext" id="stuckNext">Nächster Tipp →</button></div>`;
+  $("#stuckNext").onclick=()=>showStuck(true);}
+function refreshHelp(){const h=$("#help");if(h){h.innerHTML=helpHTML();bindHelp();}}
+let lastField=null;
+function insert(w){if(S.where!=="tool"){toast("Schreib es in dein Heft!");return;}
+  const t=lastField&&lastField.dataset.text!=="title"?lastField:$("#t_"+S.sec);if(!t)return;
+  const s=t.selectionStart??t.value.length,e=t.selectionEnd??s;const before=t.value.slice(0,s);
+  const pad=before&&!/\s$/.test(before)?" ":"";t.setRangeText(pad+w+" ",s,e,"end");t.focus();S.text[t.dataset.text]=t.value;save();count();}
+function count(){const c=$("#counter");if(!c)return;const n=words([S.text.a,S.text.b,S.text.c,S.text.d].join(" "));c.innerHTML=`<b>${n}</b> Wörter`;}
+function copyText(){const txt=fullText();const done=()=>toast("Kopiert! Jetzt in die Aufgabe einfügen.");
+  try{navigator.clipboard.writeText(txt).then(done,fallback);}catch(e){fallback();}
+  function fallback(){const pre=$("#final");const r=document.createRange();r.selectNodeContents(pre);const sel=getSelection();sel.removeAllRanges();sel.addRange(r);toast("Text markiert – jetzt „Kopieren“ tippen.");}}
+function toast(m){const d=document.createElement("div");d.className="toast";d.textContent=m;d.setAttribute("role","status");document.body.appendChild(d);setTimeout(()=>d.remove(),2600);}
+
+/* ===== Neu beginnen (mit Lehrer-Code) ===== */
+$("#resetBtn").onclick=()=>{$("#modalHost").innerHTML=`<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="box"><h3 id="mt">Neu beginnen</h3><p class="muted">Dabei werden Bausteine und Text auf diesem Gerät gelöscht. Bitte den Code der Lehrkraft eingeben.</p>
+ <input type="text" id="code" autocomplete="off" placeholder="Code"><p id="codeErr" class="muted" hidden style="color:var(--ember)">Der Code stimmt nicht.</p>
+ <div class="row"><button type="button" class="btn" id="doReset">Alles löschen</button><button type="button" class="btn ghost" id="noReset">Abbrechen</button></div></div></div>`;
+ $("#code").focus();$("#noReset").onclick=()=>$("#modalHost").innerHTML="";
+ $("#doReset").onclick=()=>{if($("#code").value.trim().toLowerCase()===LEHRER_CODE){S=fresh();save();$("#modalHost").innerHTML="";render();toast("Neue Geschichte – viel Spaß!");}else $("#codeErr").hidden=false;};};
+
+if(S.step>0&&!canGo(S.step))S.step=S.mode?1:0;
+render();
+</script>
+
+</body>
+</html>
